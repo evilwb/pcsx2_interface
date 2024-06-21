@@ -1,5 +1,6 @@
 #include "pcsx2_interface.h"
 
+#include <cstdint>
 #include <exception>
 #include <iostream>
 #include <memory>
@@ -10,14 +11,11 @@
 using namespace std;
 using pcsx2 = PINE::Shared;
 
-PCSX2Interface& PCSX2Interface::get_instance() {
-    static PCSX2Interface instance;
-    return instance;
-}
+namespace PCSX2Interface {
 
-PCSX2Interface::PCSX2Interface() : ipc(std::make_unique<PINE::PCSX2>()) {}
+const auto ipc = make_unique<PINE::PCSX2>();
 
-bool PCSX2Interface::is_connected() {
+bool is_connected() {
     try {
         if (ipc->Status() == pcsx2::EmuStatus::Running) {
             return true;
@@ -31,3 +29,21 @@ bool PCSX2Interface::is_connected() {
     }
     return false;
 }
+
+unique_ptr<unsigned char> read_8(uint32_t address) {
+    if (!is_connected()) {
+        throw runtime_error("Read failed: Lost connection to pcsx2");
+    }
+
+    try {
+        auto result = make_unique<unsigned char>(ipc->Read<uint8_t>(address));
+        return result;
+    } catch (pcsx2::IPCStatus error) {
+        if (error == pcsx2::NoConnection) {
+            throw runtime_error("Read failed: Lost connection to pcsx2");
+        }
+        throw error;
+    }
+}
+
+} // namespace PCSX2Interface

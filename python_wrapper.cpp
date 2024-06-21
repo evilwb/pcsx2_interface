@@ -1,5 +1,9 @@
+#include <pybind11/cast.h>
 #include <pybind11/detail/common.h>
+#include <pybind11/pytypes.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -14,9 +18,6 @@ void echo(const std::string string) {
 
 PYBIND11_MODULE(pcsx2_interface, m) {
     m.doc() = "Exposes PS2 memory within a running instance of the PCSX2 emulator using the Pine IPC Protocol";
-    py::class_<PCSX2Interface, std::unique_ptr<PCSX2Interface, py::nodelete>>(m, "PCSX2Interface",
-                                                                              "This is a singleton class")
-        .def(py::init([]() { return std::unique_ptr<PCSX2Interface, py::nodelete>(&PCSX2Interface::get_instance()); }),
-             "This class is created by getting a reference to a statically allocated instance of the singleton")
-        .def("is_connected", &PCSX2Interface::is_connected);
+    m.def("is_connected", &PCSX2Interface::is_connected);
+    //m.def("read_8", [](uint32_t address){return PCSX2Interface::read_8(address);} );
 }
