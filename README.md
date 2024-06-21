@@ -1,1 +1,1 @@
-# rac2_interface
+# pcsx2_interface
