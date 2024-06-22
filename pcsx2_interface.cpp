@@ -1,10 +1,13 @@
 #include "pcsx2_interface.h"
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <sys/types.h>
 
 #include "pine.h"
 
@@ -12,8 +15,6 @@ using namespace std;
 using pcsx2 = PINE::Shared;
 
 namespace PCSX2Interface {
-
-const auto ipc = make_unique<PINE::PCSX2>();
 
 bool is_connected() {
     try {
@@ -30,20 +31,33 @@ bool is_connected() {
     return false;
 }
 
-unique_ptr<unsigned char> read_8(uint32_t address) {
-    if (!is_connected()) {
-        throw runtime_error("Read failed: Lost connection to pcsx2");
+const std::vector<unsigned char> read_bytes(uint32_t address, size_t num_of_bytes) {    
+    if(address + num_of_bytes >= PS2_MEMORY_SIZE) {
+        throw std::out_of_range("Tried to read outside PS2 memory range");
+    }
+
+    if(!is_connected()) {
+        throw runtime_error("Lost connection to pcsx2");
     }
 
     try {
-        auto result = make_unique<unsigned char>(ipc->Read<uint8_t>(address));
+        // TODO: should utilize pine batch reads for larger read requests
+        std::vector<unsigned char> result;
+        for(int i = 0; i < num_of_bytes; ++i) {
+            result.push_back(ipc->Read<uint8_t>(address + i));
+        }
         return result;
     } catch (pcsx2::IPCStatus error) {
         if (error == pcsx2::NoConnection) {
-            throw runtime_error("Read failed: Lost connection to pcsx2");
+            throw runtime_error("Lost connection to pcsx2");
         }
         throw error;
     }
 }
+
+void write_bytes(uint32_t address, std::vector<unsigned char> data) {
+    return;
+}
+
 
 } // namespace PCSX2Interface
