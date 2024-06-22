@@ -32,7 +32,7 @@ bool is_connected() {
 }
 
 const std::vector<unsigned char> read_bytes(uint32_t address, size_t num_of_bytes) {    
-    if(address + num_of_bytes >= PS2_MEMORY_SIZE) {
+    if(address + num_of_bytes > PS2_MEMORY_SIZE) {
         throw std::out_of_range("Tried to read outside PS2 memory range");
     }
 
@@ -56,7 +56,26 @@ const std::vector<unsigned char> read_bytes(uint32_t address, size_t num_of_byte
 }
 
 void write_bytes(uint32_t address, std::vector<unsigned char> data) {
-    return;
+    if(address + data.size() > PS2_MEMORY_SIZE) {
+        throw std::out_of_range("Tried to write outside PS2 memory range");
+    }
+
+    if(!is_connected()) {
+        throw runtime_error("Lost connection to pcsx2");
+    }
+
+    try {
+        // TODO: should utilize pine batch write for larger write requests
+        std::vector<unsigned char> result;
+        for(int i = 0; i < data.size(); ++i) {
+            ipc->Write<uint8_t>(address + i, data[i]);
+        }
+    } catch (pcsx2::IPCStatus error) {
+        if (error == pcsx2::NoConnection) {
+            throw runtime_error("Lost connection to pcsx2");
+        }
+        throw error;
+    }
 }
 
 

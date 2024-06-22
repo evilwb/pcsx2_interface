@@ -24,7 +24,8 @@ PYBIND11_MODULE(pcsx2_interface, m) {
     m.def("is_connected", &PCSX2Interface::is_connected);
     
     m.def("read_bytes", [](uint32_t address, size_t num_of_bytes){
-        return py::bytes{reinterpret_cast<const char *>(PCSX2Interface::read_bytes(address, num_of_bytes).data())}; 
+        auto result = PCSX2Interface::read_bytes(address, num_of_bytes);
+        return py::bytes{std::string{result.begin(), result.end()}};
     }, "address"_a, "number_of_bytes"_a, "read *num_of_bytes* from ps2 memory starting at *address*");
     
     m.def("read_int8", [](uint32_t address){

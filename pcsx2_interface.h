@@ -10,7 +10,7 @@
 
 namespace PCSX2Interface {
 
-const std::unique_ptr<PINE::PCSX2> ipc = std::make_unique<PINE::PCSX2>();
+inline std::unique_ptr<PINE::PCSX2> ipc = std::make_unique<PINE::PCSX2>();
 
 constexpr size_t PS2_MEMORY_SIZE = 0x2000000;
 
