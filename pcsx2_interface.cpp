@@ -1,6 +1,7 @@
 #include "pcsx2_interface.h"
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -78,5 +79,44 @@ void write_bytes(uint32_t address, std::vector<unsigned char> data) {
     }
 }
 
+uint32_t find_first(const std::vector<unsigned char> seq, uint32_t start, uint32_t end) {
+    if(start >= PS2_MEMORY_SIZE || end > PS2_MEMORY_SIZE) {
+        throw std::out_of_range("Tried to read outside PS2 memory range");
+    }
+
+    int byte_count = end - start;
+    if(byte_count <= 0) {
+        throw std::length_error("Non-positive range");
+    }
+    
+    const size_t BYTES_PER_BATCH = MAX_BATCH_REPLY_COUNT * 8;
+    int batch_count = byte_count / (BYTES_PER_BATCH);
+    int bytes_remaining = byte_count / (BYTES_PER_BATCH);
+
+
+    for(auto batch_idx : {batch_count}) {
+        ipc->InitializeBatch();
+        for(auto j : {MAX_BATCH_REPLY_COUNT}) {
+            ipc->Read<uint64_t, true>(start + (batch_idx * BYTES_PER_BATCH + j * 8));
+        }
+        auto resr = ipc->FinalizeBatch();
+        ipc->SendCommand(resr);
+
+        for(auto byte_idx : {BYTES_PER_BATCH}) {
+            if(ipc->GetReply<pcsx2::MsgRead8>(resr, byte_idx) == seq[0]) {
+                vector<unsigned char> buffer;
+                for(const auto i : {seq.size()}) {
+                    buffer.push_back(ipc->GetReply<pcsx2::MsgRead8>(resr, byte_idx + i));
+                }
+
+                if(buffer == seq) {
+                    return start + batch_idx * BYTES_PER_BATCH + byte_idx;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
 
 } // namespace PCSX2Interface

@@ -16,24 +16,44 @@ constexpr size_t PS2_MEMORY_SIZE = 0x2000000;
 
 bool is_connected();
 const std::vector<unsigned char> read_bytes(uint32_t address, size_t num_of_bytes);
-uint8_t read_int8(uint32_t address);
-uint16_t read_int16(uint32_t address);
-uint32_t read_int32(uint32_t address);
-uint64_t read_int64(uint32_t address);
-
 void write_bytes(uint32_t address, std::vector<unsigned char> data);
+uint32_t find_first(const std::vector<unsigned char> seq, uint32_t start = 0x0, uint32_t end = PS2_MEMORY_SIZE);
+
+template<typename T>
+T read_int(uint32_t address) {
+    if(address + sizeof(T) > PS2_MEMORY_SIZE) {
+        throw std::out_of_range("Tried to read outside PS2 memory range");
+    }
+
+    if(!is_connected()) {
+        throw std::runtime_error("Read Failed. No connection to pcsx2");
+    }
+
+    try {
+        return ipc->Read<T>(address);
+    } catch (PINE::Shared::IPCStatus error) {
+        if (error == PINE::Shared::NoConnection) {
+            throw std::runtime_error("Read Failed. No connection to pcsx2");
+        }
+        throw error;
+    }
+}
 
 template<typename T>
 void write_int(uint32_t address, T number) {
+    if(address + sizeof(T) > PS2_MEMORY_SIZE) {
+        throw std::out_of_range("Tried to read outside PS2 memory range");
+    }
+
     if(!is_connected()) {
-        throw std::runtime_error("Lost connection to pcsx2");
+        throw std::runtime_error("Write Failed. No connection to pcsx2");
     }
 
     try {
         ipc->Write<T>(address, number);
     } catch (PINE::Shared::IPCStatus error) {
         if (error == PINE::Shared::NoConnection) {
-            throw std::runtime_error("Lost connection to pcsx2");
+            throw std::runtime_error("Write Failed. No connection to pcsx2");
         }
         throw error;
     }
