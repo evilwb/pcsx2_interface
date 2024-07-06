@@ -12,4 +12,7 @@ add_library(pine INTERFACE)
 target_include_directories(pine INTERFACE pine/)
 target_link_libraries(pcsx2_interface PRIVATE pine)
 
-
+if(WIN32)
+    message(STATUS "Detected Windows - Adding -lws2_32 linker option")
+    set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} -lws2_32")
+endif()
