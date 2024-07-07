@@ -1,13 +1,17 @@
 #include "pcsx2_interface.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <iostream>
+#include <iterator>
 #include <memory>
+#include <optional>
 #include <stdexcept>
+#include <vector>
 #include <sys/types.h>
 
 #include "pine.h"
@@ -79,44 +83,58 @@ void write_bytes(uint32_t address, std::vector<unsigned char> data) {
     }
 }
 
-uint32_t find_first(const std::vector<unsigned char> seq, uint32_t start, uint32_t end) {
-    if(start >= PS2_MEMORY_SIZE || end > PS2_MEMORY_SIZE) {
+optional<uint32_t> find_first(const std::vector<unsigned char> seq, uint32_t start_adr, uint32_t end_adr) {
+    uint32_t current_address = start_adr;
+    while(current_address < end_adr) {
+        vector<unsigned char> batch{};
+        if(current_address + BYTES_PER_BATCH < end_adr) {
+            batch = batch_read(current_address, current_address + BYTES_PER_BATCH);
+        } else {
+            batch = batch_read(current_address, end_adr);
+        }
+        
+        auto res = search(batch.begin(), batch.end(), seq.begin(), seq.end());
+        if(res != batch.end()) {
+            return make_optional(current_address + distance(batch.begin(), res));
+        }
+        current_address += batch.size();
+    }
+    return nullopt;
+}
+
+const std::vector<unsigned char> batch_read(uint32_t start_adr, uint32_t end_adr) {
+    if(start_adr >= PS2_MEMORY_SIZE || end_adr > PS2_MEMORY_SIZE) {
         throw std::out_of_range("Tried to read outside PS2 memory range");
     }
 
-    int byte_count = end - start;
+    const int byte_count = end_adr - start_adr;
     if(byte_count <= 0) {
         throw std::length_error("Non-positive range");
     }
-    
-    const size_t BYTES_PER_BATCH = MAX_BATCH_REPLY_COUNT * 8;
-    int batch_count = byte_count / (BYTES_PER_BATCH);
-    int bytes_remaining = byte_count / (BYTES_PER_BATCH);
-
-
-    for(auto batch_idx : {batch_count}) {
-        ipc->InitializeBatch();
-        for(auto j : {MAX_BATCH_REPLY_COUNT}) {
-            ipc->Read<uint64_t, true>(start + (batch_idx * BYTES_PER_BATCH + j * 8));
-        }
-        auto resr = ipc->FinalizeBatch();
-        ipc->SendCommand(resr);
-
-        for(auto byte_idx : {BYTES_PER_BATCH}) {
-            if(ipc->GetReply<pcsx2::MsgRead8>(resr, byte_idx) == seq[0]) {
-                vector<unsigned char> buffer;
-                for(const auto i : {seq.size()}) {
-                    buffer.push_back(ipc->GetReply<pcsx2::MsgRead8>(resr, byte_idx + i));
-                }
-
-                if(buffer == seq) {
-                    return start + batch_idx * BYTES_PER_BATCH + byte_idx;
-                }
-            }
-        }
+    if(byte_count > 102400) {
+        throw std::length_error("Exceeded max batch size");
     }
 
-    return 0;
+    size_t batch_remainder = byte_count % 8;
+    
+    ipc->InitializeBatch();
+    for(int i = start_adr; i < start_adr + byte_count - batch_remainder; i += 8) {
+        ipc->Read<uint64_t, true>(i);
+    }
+
+    auto resr = ipc->FinalizeBatch();
+    ipc->SendCommand(resr);
+
+    unsigned char buffer[byte_count - batch_remainder];
+    for(int i = 0; i < byte_count / 8; ++i) {
+        reinterpret_cast<uint64_t*>(buffer)[i] = ipc->GetReply<pcsx2::MsgRead64>(resr, i);
+    }
+
+    vector result(buffer, buffer + byte_count - batch_remainder);
+    auto last_bytes{read_bytes(end_adr - batch_remainder, batch_remainder)};
+    result.insert(result.end(), last_bytes.begin(), last_bytes.end());
+
+    return result;
 }
 
 } // namespace PCSX2Interface
