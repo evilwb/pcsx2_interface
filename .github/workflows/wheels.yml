@@ -5,7 +5,7 @@ on:
   pull_request:
   push:
     branches:
-     - master
+     - main
   release:
     types:
       - published
@@ -41,6 +41,8 @@ jobs:
   build_wheels:
     name: Wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      CMAKE_GENERATOR: "MinGW Makefiles"
     strategy:
       fail-fast: false
       matrix:
@@ -55,8 +57,10 @@ jobs:
 
     - uses: pypa/cibuildwheel@v2.19
       env:
-        CIBW_PRERELEASE_PYTHONS: true
-        CIBW_ARCHS_WINDOWS: auto ARM64
+        CIBW_ARCHS_LINUX: x86_64
+        CIBW_ARCHS_MACOS: arm64 x86_64
+        CIBW_ARCHS_WINDOWS: AMD64
+        CIBW_SKIP: pp* *musllinux*
 
     - name: Verify clean directory
       run: git diff --exit-code
