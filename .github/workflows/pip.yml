@@ -10,10 +10,11 @@ on:
 jobs:
   build:
     name: Build with Pip
-    runs-on: [macos-13, ubuntu-latest]
+    runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
       matrix:
+        platform: [macos-13, ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
@@ -29,6 +30,8 @@ jobs:
   build-windows:
     name: Build with Pip Windows
     runs-on: windows-latest
+    env:
+      CMAKE_GENERATOR: "MinGW Makefiles"
     strategy:
       fail-fast: false
       matrix:
