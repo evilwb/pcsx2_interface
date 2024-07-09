@@ -41,8 +41,6 @@ jobs:
   build_wheels:
     name: Wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    env:
-      CMAKE_GENERATOR: "MinGW Makefiles"
     strategy:
       fail-fast: false
       matrix:
@@ -61,6 +59,7 @@ jobs:
         CIBW_ARCHS_MACOS: arm64 x86_64
         CIBW_ARCHS_WINDOWS: AMD64
         CIBW_SKIP: pp* *musllinux*
+        CIBW_ENVIRONMENT_WINDOWS: CMAKE_GENERATOR="MinGW Makefiles"
 
     - name: Verify clean directory
       run: git diff --exit-code
