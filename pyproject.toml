@@ -27,6 +27,8 @@ classifiers = [
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
+cmake.version = ">=3.15"
+ninja.version = ">=1.11"
 
 
 # [tool.pytest.ini_options]
