@@ -19,7 +19,7 @@
 using namespace pybind11::literals;
 namespace py = pybind11;
 
-PYBIND11_MODULE(pcsx2_interface, m) {
+PYBIND11_MODULE(_pcsx2_interface, m) {
     m.doc() = "Exposes PS2 memory within a running instance of the PCSX2 emulator using the Pine IPC Protocol";
 
     m.def("is_connected", &PCSX2Interface::is_connected);

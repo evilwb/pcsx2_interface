@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 add_subdirectory(pybind11)
-pybind11_add_module(pcsx2_interface python_wrapper.cpp pcsx2_interface.cpp)
+pybind11_add_module(pcsx2_interface src/python_wrapper.cpp src/pcsx2_interface.cpp)
 
 add_library(pine INTERFACE)
 target_include_directories(pine INTERFACE pine/)
