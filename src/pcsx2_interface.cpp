@@ -42,7 +42,7 @@ const std::vector<unsigned char> read_bytes(uint32_t address, size_t num_of_byte
     }
 
     if(!is_connected()) {
-        throw runtime_error("Lost connection to pcsx2");
+        throw runtime_error("No connection to pcsx2");
     }
 
     try {

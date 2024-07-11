@@ -1,3 +1,2 @@
-from ._pcsx2_interface import is_connected
+from pcsx2_interface.pcsx2_interface import *
 
-__all__ = ["is_connected"]
