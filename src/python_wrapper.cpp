@@ -23,6 +23,7 @@ PYBIND11_MODULE(pcsx2_interface, m) {
     m.doc() = "Exposes PS2 memory within a running instance of the PCSX2 emulator using the Pine IPC Protocol";
 
     m.def("is_connected", &PCSX2Interface::is_connected);
+    m.def("connect", &PCSX2Interface::connect);
 
     m.def(
         "read_bytes",

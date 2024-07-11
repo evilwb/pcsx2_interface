@@ -11,12 +11,13 @@
 
 namespace PCSX2Interface {
 
-inline std::unique_ptr<PINE::PCSX2> ipc = std::make_unique<PINE::PCSX2>();
+inline std::unique_ptr<PINE::PCSX2> ipc = nullptr;
 
 constexpr size_t PS2_MEMORY_SIZE = 0x2000000;
 constexpr size_t BYTES_PER_BATCH = 102400;
 
 bool is_connected();
+void connect();
 const std::vector<unsigned char> read_bytes(uint32_t address, size_t num_of_bytes);
 const std::vector<unsigned char> batch_read(uint32_t start_adr, uint32_t end_adr);
 void write_bytes(uint32_t address, std::vector<unsigned char> data);

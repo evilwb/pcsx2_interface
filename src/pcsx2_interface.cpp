@@ -22,18 +22,29 @@ using pcsx2 = PINE::Shared;
 namespace PCSX2Interface {
 
 bool is_connected() {
+    if(!ipc) {
+        return false;
+    }
+    
     try {
         if (ipc->Status() == pcsx2::EmuStatus::Running) {
             return true;
         }
     } catch (pcsx2::IPCStatus error) {
-        if (error == pcsx2::NoConnection) {
-            return false;
-        }
-        cout << "Pine Error: " << static_cast<int>(error) << endl;
-        throw std::runtime_error("Pine Error");
+        if (error != pcsx2::NoConnection) {
+            cout << "Pine Error: " << static_cast<int>(error) << endl;
+            throw std::runtime_error("Pine Error");
+        }   
     }
     return false;
+}
+
+void connect() {
+    if(is_connected()) {
+        return;
+    }
+
+    ipc = std::make_unique<PINE::PCSX2>();
 }
 
 const std::vector<unsigned char> read_bytes(uint32_t address, size_t num_of_bytes) {    
@@ -54,7 +65,7 @@ const std::vector<unsigned char> read_bytes(uint32_t address, size_t num_of_byte
         return result;
     } catch (pcsx2::IPCStatus error) {
         if (error == pcsx2::NoConnection) {
-            throw runtime_error("Lost connection to pcsx2");
+            throw runtime_error("No connection to pcsx2");
         }
         throw error;
     }
@@ -66,7 +77,7 @@ void write_bytes(uint32_t address, std::vector<unsigned char> data) {
     }
 
     if(!is_connected()) {
-        throw runtime_error("Lost connection to pcsx2");
+        throw runtime_error("No connection to pcsx2");
     }
 
     try {
@@ -77,7 +88,7 @@ void write_bytes(uint32_t address, std::vector<unsigned char> data) {
         }
     } catch (pcsx2::IPCStatus error) {
         if (error == pcsx2::NoConnection) {
-            throw runtime_error("Lost connection to pcsx2");
+            throw runtime_error("No connection to pcsx2");
         }
         throw error;
     }
@@ -113,6 +124,10 @@ const std::vector<unsigned char> batch_read(uint32_t start_adr, uint32_t end_adr
     }
     if(byte_count > 102400) {
         throw std::length_error("Exceeded max batch size");
+    }
+
+    if(!is_connected()) {
+        throw runtime_error("No connection to pcsx2");
     }
 
     size_t batch_remainder = byte_count % 8;
