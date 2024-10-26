@@ -5,7 +5,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pcsx2_interface"
-version = "0.0.2"
+version = "0.0.3"
 description="Exposes PS2 memory within a running instance of the PCSX2 emulator using the Pine IPC Protocol."
 readme = "README.md"
 authors = [
