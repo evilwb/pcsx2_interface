@@ -18,6 +18,8 @@ constexpr size_t BYTES_PER_BATCH = 102400;
 
 bool is_connected();
 void connect();
+void disconnect();
+std::string get_game_id();
 const std::vector<unsigned char> read_bytes(uint32_t address, size_t num_of_bytes);
 const std::vector<unsigned char> batch_read(uint32_t start_adr, uint32_t end_adr);
 void write_bytes(uint32_t address, std::vector<unsigned char> data);

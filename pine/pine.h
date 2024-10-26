@@ -1120,6 +1120,9 @@ class Shared {
 #ifdef _WIN32
         WSACleanup();
 #endif
+        if(sock_state) {
+            close_portable(sock);
+        }
         delete[] ret_buffer;
         delete[] ipc_buffer;
         delete[] batch_arg_place;

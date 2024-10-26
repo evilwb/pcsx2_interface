@@ -10,6 +10,7 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <ostream>
 #include <stdexcept>
 #include <vector>
 #include <sys/types.h>
@@ -27,11 +28,11 @@ bool is_connected() {
     }
     
     try {
-        if (ipc->Status() == pcsx2::EmuStatus::Running) {
+        if(ipc->Status() == pcsx2::EmuStatus::Running) {
             return true;
         }
     } catch (pcsx2::IPCStatus error) {
-        if (error != pcsx2::NoConnection) {
+        if(error != pcsx2::NoConnection) {
             cout << "Pine Error: " << static_cast<int>(error) << endl;
             throw std::runtime_error("Pine Error");
         }   
@@ -40,11 +41,25 @@ bool is_connected() {
 }
 
 void connect() {
-    if(is_connected()) {
+    if(ipc) {
         return;
     }
 
     ipc = std::make_unique<PINE::PCSX2>();
+}
+
+void disconnect() {
+    if(ipc) {
+        ipc.reset();
+    }
+}
+
+string get_game_id() {
+    if(!is_connected()) {
+        throw runtime_error("No connection to pcsx2");
+    }
+
+    return ipc->GetGameID();
 }
 
 const std::vector<unsigned char> read_bytes(uint32_t address, size_t num_of_bytes) {    
